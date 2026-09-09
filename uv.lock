@@ -425,6 +425,19 @@ wheels = [
 ]
 
 [[package]]
+name = "heb-tts-normalizer"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/0d/9b77f6d067d0769871103f80f4f76285d285494a9574e98ef7f7ecd36e7a/heb_tts_normalizer-0.2.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:f9c2fd1ced5a81b0369e006c1f3d0e8c3bf9a52ece6fb25b429a0bdf9bc5bf4a", size = 802675, upload-time = "2026-09-09T14:38:16.945Z" },
+    { url = "https://files.pythonhosted.org/packages/32/cb/47fa30f8148d68d52cfad82955c91aafa12fecf4dd379df694798e270f7a/heb_tts_normalizer-0.2.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:0eef9524f114fcf1d081b9da9f1d2b2d3630f2f990ca0d9b2b3946bdfe983b8d", size = 778338, upload-time = "2026-09-09T14:38:18.533Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/02/31f7294def4ab18041449618845c6d6786a4b2bb1fc6bae146fe8e41ae53/heb_tts_normalizer-0.2.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:a6b5bee4e1e9b9f22daefde5d311cd5c5a0a0aaff04227c84fdea721a30ef2f2", size = 873910, upload-time = "2026-09-09T14:38:19.87Z" },
+    { url = "https://files.pythonhosted.org/packages/85/01/475821dd4cbd65d3bc87ba34c681aa2410c1bc854a23779936221201ad3d/heb_tts_normalizer-0.2.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:db2283b959d541d2b1f3dccb563d6969ff87605f730a83db8145a10146ccbc0c", size = 917658, upload-time = "2026-09-09T14:38:21.596Z" },
+    { url = "https://files.pythonhosted.org/packages/13/10/540b12de1fccb79c705773bceb139c145c01301d4d08b3a6b140229ed6ea/heb_tts_normalizer-0.2.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:d272d2d1d0ddbf82c71568c06cc538d904ab40c3ef30aa6e118e4431a1cb10f5", size = 935668, upload-time = "2026-09-09T14:38:23.093Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/08/47879aee5f7c0a77e6c9115230a69a68579101b26b9a3642ed4c7c592ee6/heb_tts_normalizer-0.2.0-py3-none-win_amd64.whl", hash = "sha256:036ba2acf2f6083a889cbf4f474ae3c0f9308b4c287c791e8c000a44419d55cc", size = 741680, upload-time = "2026-09-09T14:38:25.47Z" },
+]
+
+[[package]]
 name = "hf-xet"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -989,6 +1002,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "espeakng-loader" },
+    { name = "heb-tts-normalizer" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "phonemizer" },
@@ -1011,6 +1025,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "espeakng-loader", specifier = ">=0.2.4" },
+    { name = "heb-tts-normalizer", specifier = ">=0.2.0" },
     { name = "numpy", specifier = ">=2.5.2" },
     { name = "onnxruntime", specifier = ">=1.29.0" },
     { name = "phonemizer", specifier = ">=3.4.0" },

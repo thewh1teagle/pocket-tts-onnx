@@ -65,6 +65,23 @@ tts.create(text, voice=cond, phonemes=True)
 | unvocalized Hebrew | phonemes from [renikud](https://huggingface.co/thewh1teagle/renikud) |
 | Latin script | phonemes from espeak (pass `language=None` to leave it as written) |
 
+Digits go first. renikud reads letters, so `₪25` would reach it as three
+characters it has no consonant for and come back out as literal `₪25` for the
+tokenizer to make what it can of. Hebrew text is therefore normalized before any
+of that: numbers, money, dates, times and units become the words a person would
+say, while `[[literals]]`, nikud, the phonikud `|` prefix, Latin runs, URLs and
+emails are left exactly as written.
+
+```python
+phonemize_mixed("הכרטיס עלה ₪25 בשעה 14:30", model="renikud.onnx")
+# ... עשרים וחמישה שקלים בשעה שתיים וחצי אחר הצהריים, as phonemes
+```
+
+Pass `normalize=False` to send the text through as written, or a
+[`Config`](https://github.com/thewh1teagle/heb-tts-normalizer) to set the
+reading style — `Config(clock=Clock.H24)` reads `14:30` as ארבע עשרה שלושים.
+`normalize_hebrew` is that step on its own.
+
 Nikud is already unambiguous, which is why it is left alone; unvocalized Hebrew
 is not, which is why it needs a phonemizer. To add nikud to a line in the first
 place, plain or with the phonikud stress and prefix marks, use

@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "espeak-ng": "^1.0.2",
+    "heb-tts-normalizer": "^0.2.0",
     "onnxruntime-web": "^1.29.0"
   },
   "optionalDependencies": {

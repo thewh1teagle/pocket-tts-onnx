@@ -11,6 +11,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.13"
 dependencies = [
     "espeakng-loader>=0.2.4",
+    "heb-tts-normalizer>=0.2.0",
     "numpy>=2.5.2",
     "onnxruntime>=1.29.0",
     "phonemizer>=3.4.0",

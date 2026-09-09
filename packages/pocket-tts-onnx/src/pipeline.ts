@@ -14,6 +14,7 @@ import { loadEspeak, phonemizeEnglish } from "./espeak.js";
 import { HebrewG2P } from "./g2p.js";
 import { language as languageByName } from "./languages.js";
 import { phonemizeMixed } from "./mixed.js";
+import { normalizeHebrew, prepareNormalizer } from "./normalize.js";
 import { resolveOptions, type Options, type Resolved } from "./options.js";
 import { PocketTTS, type Assets } from "./tts.js";
 
@@ -184,8 +185,12 @@ export class Pipeline {
   }
 
   /** Turn everyday text into the stressed IPA the adapter reads. */
-  private async phonemize(text: string, options: SpeakOptions): Promise<string> {
+  private async phonemize(input: string, options: SpeakOptions): Promise<string> {
     options.onStatus?.("phonemizing");
+    // Digits before letters: renikud has no consonant for a `2`, so `₪25` has
+    // to become words while it is still Hebrew text.
+    const style = this.config.hebrewNormalization;
+    const text = style && HEBREW.test(input) ? await normalizeHebrew(input, style) : input;
     const hebrew = HEBREW.test(text) ? await this.hebrew(options.onProgress) : null;
     if (LATIN.test(text)) await this.english(options.onProgress);
     return phonemizeMixed(text, {
@@ -247,6 +252,7 @@ export class Pipeline {
     // The Hebrew path also has to fetch renikud and espeak, and both are slower
     // on the sentence that loads them than on any sentence after; a throwaway
     // word here is what makes the first Hebrew take cost the same as the tenth.
+    if (this.config.hebrewNormalization) await prepareNormalizer();
     const hebrew = await this.hebrew();
     await hebrew.phonemize("שלום");
     await this.english();
