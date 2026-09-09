@@ -36,4 +36,6 @@ export { HebrewG2P } from "./g2p.js";
 export { loadEspeak, phonemizeEnglish, espeakReady } from "./espeak.js";
 export { phonemizeMixed } from "./mixed.js";
 export type { Phonemizers } from "./mixed.js";
+export { normalizeHebrew, normalizerReady, prepareNormalizer } from "./normalize.js";
+export type { HebrewNormalization, NormalizerConfig } from "./normalize.js";
 export { breakParagraphs } from "./text.js";

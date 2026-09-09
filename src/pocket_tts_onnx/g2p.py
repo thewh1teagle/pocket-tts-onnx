@@ -23,11 +23,16 @@ import os
 import re
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from heb_tts_normalizer import Config
 
 DEFAULT_LANGUAGE = "en-us"
 # Text between double brackets is already unambiguous and is passed straight through.
 LITERAL = re.compile(r"\[\[(.*?)\]\]", re.DOTALL)
 _WORDS = re.compile(r"(\s+)")
+_HEBREW = re.compile(r"[\u0590-\u05FF]")
 _SCRIPTS = re.compile(r"[\u0590-\u05FF]+|[^\u0590-\u05FF]+")
 HEBREW_LANGUAGES = {"he", "he-il", "heb", "hebrew"}
 # espeak wants a full tag, but "en" is what everyone reaches for.
@@ -150,8 +155,25 @@ def _groups(text: str) -> list[tuple[str, str]]:
     return [(kind, "".join(parts)) for kind, parts in groups]
 
 
+def normalize_hebrew(text: str, config: "Config | None" = None) -> str:
+    """Everyday Hebrew in, speakable Hebrew words out.
+
+    renikud reads letters, not digits: `\u20aa25` reaches it as three characters it
+    has no consonant for and comes back out as literal `\u20aa25`. So numbers,
+    money, dates, times and units become the words a person would say while the
+    text is still Hebrew. `[[literals]]`, nikud, the phonikud `|` prefix, Latin
+    runs, URLs and emails are all left exactly as written.
+    """
+    from heb_tts_normalizer import normalize as _normalize
+
+    return _normalize(text, config)
+
+
 def phonemize_mixed(
-    text: str, model: str | Path | None = None, language: str | None = DEFAULT_LANGUAGE
+    text: str,
+    model: str | Path | None = None,
+    language: str | None = DEFAULT_LANGUAGE,
+    normalize: "bool | Config" = True,
 ) -> str:
     """Turn everyday mixed text into what a multiformat adapter expects.
 
@@ -166,10 +188,16 @@ def phonemize_mixed(
       sentence is spoken rather than spelled. Pass `language=None` to leave it
       as written instead.
 
+    Hebrew text is normalized first, so `\u20aa25` is spoken rather than spelled.
+    Pass `normalize=False` to send it through as written, or a `Config` to set
+    the reading style — 12- or 24-hour clock, date order, and the rest.
+
     ```python
     phonemize_mixed("אני עובד עם Photoshop כל יום", model="renikud.onnx")
     ```
     """
+    if normalize is not False and _HEBREW.search(text):
+        text = normalize_hebrew(text, None if normalize is True else normalize)
     out: list[str] = []
     at = 0
     for match in LITERAL.finditer(text):

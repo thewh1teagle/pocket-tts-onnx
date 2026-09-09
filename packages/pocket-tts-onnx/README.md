@@ -130,6 +130,22 @@ the phonemizer gets wrong:
 await tts.speak("שלום, אני מריץ [[pˈɑkət]] TTS");
 ```
 
+Numbers are read before any of that. renikud has no consonant for a `2`, so
+`₪25` would be spelled out character by character; instead numbers, money,
+dates, times and units become the words a person would say, and `[[literals]]`,
+nikud, Latin runs, URLs and emails are left as written:
+
+```ts
+await tts.speak("הכרטיס עלה ₪25 בשעה 14:30");
+// עשרים וחמישה שקלים בשעה שתיים וחצי אחר הצהריים
+
+await Engine.load({ hebrewNormalization: { clock: "24" } });  // ארבע עשרה שלושים
+await Engine.load({ hebrewNormalization: false });            // as written
+```
+
+Its 1.3 MB of wasm is fetched the first time a Hebrew line needs it, so an
+English page never pays for it.
+
 ## Voice cloning
 
 ```ts

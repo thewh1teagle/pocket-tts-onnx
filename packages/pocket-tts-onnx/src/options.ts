@@ -10,6 +10,7 @@
 import { configureRuntime } from "#platform";
 
 import { language as languageByName } from "./languages.js";
+import { normalizerConfig, type HebrewNormalization, type NormalizerConfig } from "./normalize.js";
 
 /**
  * Where the published models live.
@@ -42,11 +43,20 @@ export interface Options {
   espeakWasmUrl?: string;
   /** Threads onnxruntime may use. Ignored in Node, which uses the CPU provider. */
   threads?: number;
+  /**
+   * Read Hebrew numbers, money, dates, times and units as words before the g2p
+   * sees them, so `₪25` is spoken rather than spelled. On by default; pass
+   * `false` to send the text through as written, or an object to set the
+   * reading style — 12- or 24-hour clock, date order, and the rest.
+   */
+  hebrewNormalization?: HebrewNormalization;
 }
 
 export interface Resolved {
   baseUrl: string;
   espeakWasmUrl?: string;
+  /** The reading style for Hebrew normalization, or `null` when it is off. */
+  hebrewNormalization: NormalizerConfig | null;
 }
 
 const slash = (url: string) => (url.endsWith("/") ? url : `${url}/`);
@@ -57,5 +67,9 @@ export function resolveOptions(options: Options = {}): Resolved {
   // `||`, not `??`: an unset environment variable reaches a build as an empty
   // string, which would otherwise be taken as a real base and 404.
   const base = options.modelsUrl || MODELS_URL + languageByName(options.language ?? "english").model;
-  return { baseUrl: slash(base), espeakWasmUrl: options.espeakWasmUrl };
+  return {
+    baseUrl: slash(base),
+    espeakWasmUrl: options.espeakWasmUrl,
+    hebrewNormalization: normalizerConfig(options.hebrewNormalization),
+  };
 }
