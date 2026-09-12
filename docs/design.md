@@ -84,7 +84,7 @@ Decode steps 1, 2 and 4 each match their torch equivalent, and durations agree.
 | --- | --- |
 | `src/pocket_tts_onnx/tts.py` | the runtime: `PocketTTS`, `.create()`, `.stream()` |
 | `src/pocket_tts_onnx/text.py` | sentence splitting, prompt normalisation, the mixed IPA tokenizer |
-| `src/pocket_tts_onnx/g2p.py` | text to IPA, via espeak and renikud |
+| `src/pocket_tts_onnx/g2p.py` | text to IPA, via espeak and conikud |
 | `src/pocket_tts_onnx/audio.py` | reading and resampling a voice prompt |
 | `src/pocket_tts_onnx/export/step_model.py` | ONNX-exportable rewrite of inference |
 | `src/pocket_tts_onnx/export/export.py` | the exporter and its CLI |

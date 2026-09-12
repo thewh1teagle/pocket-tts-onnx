@@ -54,7 +54,7 @@ can:
 ```python
 from pocket_tts_onnx import phonemize_mixed
 
-text = phonemize_mixed("אני עובד עם Photoshop כל יום.", model="renikud.onnx")
+text = phonemize_mixed("אני עובד עם Photoshop כל יום.")
 tts.create(text, voice=cond, phonemes=True)
 ```
 
@@ -62,43 +62,40 @@ tts.create(text, voice=cond, phonemes=True)
 | --- | --- |
 | `[[ʃalˈom]]`, `[[הַיָּם]]` | itself, brackets removed: IPA or nikud, whatever is inside is spoken as written |
 | Hebrew with nikud, plain or enhanced | itself, kept exactly as typed |
-| unvocalized Hebrew | phonemes from [renikud](https://huggingface.co/thewh1teagle/renikud) |
+| unvocalized Hebrew | phonemes from [conikud](https://github.com/conikud/conikud-onnx) |
 | Latin script | phonemes from espeak (pass `language=None` to leave it as written) |
 
-Digits go first. renikud reads letters, so `₪25` would reach it as three
+Digits go first. conikud reads letters, so `₪25` would reach it as three
 characters it has no consonant for and come back out as literal `₪25` for the
-tokenizer to make what it can of. Hebrew text is therefore normalized before any
-of that: numbers, money, dates, times and units become the words a person would
-say, while `[[literals]]`, nikud, the phonikud `|` prefix, Latin runs, URLs and
-emails are left exactly as written.
+tokenizer to make what it can of. Unvocalized Hebrew is therefore normalized on
+its way in: numbers, money, dates, times and units become the words a person
+would say, while `[[literals]]`, nikud and Latin runs are left exactly as
+written.
 
 ```python
-phonemize_mixed("הכרטיס עלה ₪25 בשעה 14:30", model="renikud.onnx")
+phonemize_mixed("הכרטיס עלה ₪25 בשעה 14:30")
 # ... עשרים וחמישה שקלים בשעה שתיים וחצי אחר הצהריים, as phonemes
 ```
 
-Pass `normalize=False` to send the text through as written, or a
-[`Config`](https://github.com/thewh1teagle/heb-tts-normalizer) to set the
-reading style — `Config(clock=Clock.H24)` reads `14:30` as ארבע עשרה שלושים.
-`normalize_hebrew` is that step on its own.
+Pass `normalize=False` to send the text through as written.
 
 Nikud is already unambiguous, which is why it is left alone; unvocalized Hebrew
 is not, which is why it needs a phonemizer. To add nikud to a line in the first
 place, plain or with the phonikud stress and prefix marks, use
-[phonikud](https://pypi.org/project/phonikud-onnx/). renikud's weights are a separate
-download: pass `model=`, set `$RENIKUD_MODEL`, or let `huggingface_hub` fetch
-them.
+[phonikud](https://pypi.org/project/phonikud-onnx/). conikud's weights are fetched
+from the Hub on first use and cached; to use a local export instead, pass
+`model=` or set `$CONIKUD_MODEL`.
 
 `phonemize` is the single-language version underneath it, if you want one script
 only:
 
 ```python
 phonemize("How are you today?")        # espeak
-phonemize("שלום עולם", language="he")  # renikud
+phonemize("שלום עולם", language="he")  # conikud
 ```
 
 Backends are built once and reused: the first English call spends about a second
-loading espeak and later ones are microseconds; renikud is 61 ms then 3 ms.
+loading espeak and later ones are microseconds; conikud is loaded once the same way.
 
 ## Decode steps
 

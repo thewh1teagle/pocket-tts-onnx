@@ -10,7 +10,7 @@ text:
 
 English goes through espeak (via phonemizer, with the library bundled by
 espeakng-loader). Hebrew has no espeak path worth using, so it goes through
-renikud, a small ONNX G2P whose weights are a separate download.
+conikud, a small ONNX G2P that fetches its own weights on first use.
 
 Backends are built once and reused. Constructing either one — loading the espeak
 shared library, or an onnxruntime session — costs far more than the
@@ -23,23 +23,16 @@ import os
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from heb_tts_normalizer import Config
 
 DEFAULT_LANGUAGE = "en-us"
 # Text between double brackets is already unambiguous and is passed straight through.
 LITERAL = re.compile(r"\[\[(.*?)\]\]", re.DOTALL)
 _WORDS = re.compile(r"(\s+)")
-_HEBREW = re.compile(r"[\u0590-\u05FF]")
 _SCRIPTS = re.compile(r"[\u0590-\u05FF]+|[^\u0590-\u05FF]+")
 HEBREW_LANGUAGES = {"he", "he-il", "heb", "hebrew"}
 # espeak wants a full tag, but "en" is what everyone reaches for.
 LANGUAGE_ALIASES = {"en": "en-us", "english": "en-us"}
-RENIKUD_REPO = "thewh1teagle/renikud"
-RENIKUD_FILE = "model.onnx"
-RENIKUD_ENV = "RENIKUD_MODEL"
+CONIKUD_ENV = "CONIKUD_MODEL"
 
 
 @lru_cache(maxsize=None)
@@ -60,35 +53,24 @@ def _espeak_backend(language: str):
     return EspeakBackend(language, preserve_punctuation=True, with_stress=True)
 
 
-def _renikud_path() -> str:
-    """The renikud weights: an explicit path, else the Hugging Face cache."""
-    from_env = os.environ.get(RENIKUD_ENV)
-    if from_env:
-        return from_env
-    try:
-        from huggingface_hub import hf_hub_download
-    except ImportError:
-        raise RuntimeError(
-            f"Hebrew G2P needs the renikud weights. Download them with\n"
-            f"  wget https://huggingface.co/{RENIKUD_REPO}/resolve/main/{RENIKUD_FILE}"
-            f" -O renikud.onnx\n"
-            f"then pass model=..., or set {RENIKUD_ENV}."
-        ) from None
-    return hf_hub_download(RENIKUD_REPO, RENIKUD_FILE)
-
-
 @lru_cache(maxsize=4)
-def _renikud(model: str):
+def _conikud(model: str | None):
+    """The Hebrew G2P: an explicit path, else `$CONIKUD_MODEL`, else the Hub copy."""
     try:
-        from renikud_onnx import G2P
+        from conikud_onnx import G2P
     except ImportError:
         raise RuntimeError(
-            "Hebrew G2P needs renikud-onnx: pip install renikud-onnx"
+            "Hebrew G2P needs conikud-onnx: pip install git+https://github.com/conikud/conikud-onnx"
         ) from None
-    return G2P(model)
+    return G2P(model or os.environ.get(CONIKUD_ENV) or None)
 
 
-def phonemize(text: str, language: str = DEFAULT_LANGUAGE, model: str | Path | None = None) -> str:
+def phonemize(
+    text: str,
+    language: str = DEFAULT_LANGUAGE,
+    model: str | Path | None = None,
+    normalize: bool = False,
+) -> str:
     """Stressed IPA for `text`, punctuation preserved.
 
     ```python
@@ -96,20 +78,24 @@ def phonemize(text: str, language: str = DEFAULT_LANGUAGE, model: str | Path | N
     phonemize("שלום עולם", language="he")  # 'ʃlˈom ʔolˈam'
     ```
 
-    `model` points at the renikud weights for Hebrew; without it they are taken
-    from `$RENIKUD_MODEL` or the Hugging Face cache.
+    `model` points at a local conikud export for Hebrew; without it the weights
+    are taken from `$CONIKUD_MODEL` or fetched from the Hub and cached.
+    `normalize=True` speaks Hebrew numbers, money, dates and times as words.
     """
-    return phonemize_all([text], language, model)[0]
+    return phonemize_all([text], language, model, normalize)[0]
 
 
 def phonemize_all(
-    texts: list[str], language: str = DEFAULT_LANGUAGE, model: str | Path | None = None
+    texts: list[str],
+    language: str = DEFAULT_LANGUAGE,
+    model: str | Path | None = None,
+    normalize: bool = False,
 ) -> list[str]:
     """`phonemize` over a list; English does the whole list in one espeak call."""
     language = language.lower()
     if language in HEBREW_LANGUAGES:
-        g2p = _renikud(str(model) if model is not None else _renikud_path())
-        return [g2p.phonemize(text).strip() for text in texts]
+        g2p = _conikud(str(model) if model is not None else None)
+        return [g2p.phonemize(text, normalize=normalize).strip() for text in texts]
     language = LANGUAGE_ALIASES.get(language, language)
     return [line.strip() for line in _espeak_backend(language).phonemize(list(texts), strip=True)]
 
@@ -155,25 +141,11 @@ def _groups(text: str) -> list[tuple[str, str]]:
     return [(kind, "".join(parts)) for kind, parts in groups]
 
 
-def normalize_hebrew(text: str, config: "Config | None" = None) -> str:
-    """Everyday Hebrew in, speakable Hebrew words out.
-
-    renikud reads letters, not digits: `\u20aa25` reaches it as three characters it
-    has no consonant for and comes back out as literal `\u20aa25`. So numbers,
-    money, dates, times and units become the words a person would say while the
-    text is still Hebrew. `[[literals]]`, nikud, the phonikud `|` prefix, Latin
-    runs, URLs and emails are all left exactly as written.
-    """
-    from heb_tts_normalizer import normalize as _normalize
-
-    return _normalize(text, config)
-
-
 def phonemize_mixed(
     text: str,
     model: str | Path | None = None,
     language: str | None = DEFAULT_LANGUAGE,
-    normalize: "bool | Config" = True,
+    normalize: bool = True,
 ) -> str:
     """Turn everyday mixed text into what a multiformat adapter expects.
 
@@ -183,35 +155,35 @@ def phonemize_mixed(
       happens to it;
     * Hebrew carrying nikud is already unambiguous, so it is kept exactly as
       written and tokenized as atomic Hebrew and nikud characters;
-    * unvocalized Hebrew goes through renikud, which needs `model`;
+    * unvocalized Hebrew goes through conikud, fetched on first use unless
+      `model` points at a local export;
     * Latin script goes through espeak, so an English word inside a Hebrew
       sentence is spoken rather than spelled. Pass `language=None` to leave it
       as written instead.
 
-    Hebrew text is normalized first, so `\u20aa25` is spoken rather than spelled.
-    Pass `normalize=False` to send it through as written, or a `Config` to set
-    the reading style — 12- or 24-hour clock, date order, and the rest.
+    Hebrew is normalized on the way in, so `\u20aa25` is spoken rather than
+    spelled: conikud reads letters, not digits, and numbers, money, dates and
+    times become the words a person would say. Pass `normalize=False` to send
+    the text through as written.
 
     ```python
-    phonemize_mixed("אני עובד עם Photoshop כל יום", model="renikud.onnx")
+    phonemize_mixed("אני עובד עם Photoshop כל יום")
     ```
     """
-    if normalize is not False and _HEBREW.search(text):
-        text = normalize_hebrew(text, None if normalize is True else normalize)
     out: list[str] = []
     at = 0
     for match in LITERAL.finditer(text):
-        out.append(_phonemize_plain(text[at : match.start()], model, language))
+        out.append(_phonemize_plain(text[at : match.start()], model, language, normalize))
         out.append(match.group(1))
         at = match.end()
-    out.append(_phonemize_plain(text[at:], model, language))
+    out.append(_phonemize_plain(text[at:], model, language, normalize))
     return _tidy("".join(out).strip())
 
 
 def _tidy(ipa: str) -> str:
     """Clean up the seams between two phonemizers.
 
-    A one-letter Hebrew prefix such as the `ב` of `ב-Google` reaches renikud
+    A one-letter Hebrew prefix such as the `ב` of `ב-Google` reaches conikud
     with no word around it, and can come back as a bare stress mark that then
     collides with the stress of the word after it.
     """
@@ -219,7 +191,9 @@ def _tidy(ipa: str) -> str:
     return re.sub(r"\u02c8(?=[\s,.!?;:]|$)", "", ipa)
 
 
-def _phonemize_plain(text: str, model: str | Path | None, language: str | None) -> str:
+def _phonemize_plain(
+    text: str, model: str | Path | None, language: str | None, normalize: bool
+) -> str:
     pieces = []
     for kind, group in _groups(text):
         if kind == "hebrew":
@@ -235,7 +209,7 @@ def _phonemize_plain(text: str, model: str | Path | None, language: str | None) 
         trail = group[len(group.rstrip()) :]
         core = group.strip()
         spoken = (
-            phonemize(core, language="he", model=model)
+            phonemize(core, language="he", model=model, normalize=normalize)
             if kind == "hebrew"
             else phonemize(core, language=language)
         )

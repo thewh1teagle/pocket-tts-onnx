@@ -10,12 +10,11 @@ license = "CC-BY-4.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.13"
 dependencies = [
+    "conikud-onnx",
     "espeakng-loader>=0.2.4",
-    "heb-tts-normalizer>=0.2.0",
     "numpy>=2.5.2",
     "onnxruntime>=1.29.0",
     "phonemizer>=3.4.0",
-    "renikud-onnx>=0.1.0",
     "sentencepiece>=0.2.2",
 ]
 
@@ -38,3 +37,6 @@ dev = [
     "soundfile>=0.14.0",
     "torch>=2.13.0",
 ]
+
+[tool.uv.sources]
+conikud-onnx = { git = "https://github.com/conikud/conikud-onnx" }

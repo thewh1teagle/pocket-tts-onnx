@@ -4,13 +4,8 @@ Everything below goes in the working directory. Take
 `pocket-tts-english-ipa.onnx`, which has the Hebrew adapter and a Hebrew voice
 bundled in, from the project's releases (or see docs/export.md to build one).
 
-Unvocalized Hebrew is phonemized by renikud, whose weights are a separate
-download:
-
-    wget https://huggingface.co/thewh1teagle/renikud/resolve/main/model.onnx \
-        -O renikud.onnx
-
-Then:
+Unvocalized Hebrew is phonemized by conikud, which fetches its weights from the
+Hub on first use and caches them. Then:
 
     uv run python examples/hebrew.py
 """
@@ -20,7 +15,6 @@ import soundfile as sf
 from pocket_tts_onnx import PocketTTS, phonemize_mixed
 
 MODEL = "pocket-tts-english-ipa.onnx"
-RENIKUD = "renikud.onnx"
 
 # A Hebrew voice, so the accent has somewhere to come from. To use your own
 # recording instead, clone it once and pass the result as `voice`:
@@ -31,7 +25,7 @@ VOICE = "omer"
 # `phonemize_mixed` sends each part of the text the shortest way to phonemes it
 # can, so all four of these are ordinary input.
 LINES = {
-    # Unvocalized Hebrew: renikud guesses the vowels.
+    # Unvocalized Hebrew: conikud guesses the vowels.
     "plain": "הכוח לשנות מתחיל ברגע שבו אתה מאמין שזה אפשרי!",
     # Latin words go through espeak, so they are spoken rather than spelled.
     "brands": "אני עובד עם Photoshop ועם Instagram כל יום.",
@@ -53,7 +47,7 @@ def main() -> None:
     tts = PocketTTS(MODEL)
 
     for name, line in LINES.items():
-        phonemes = phonemize_mixed(line, model=RENIKUD)
+        phonemes = phonemize_mixed(line)
         print(f"{line}\n  -> {phonemes}")
         samples, sample_rate = tts.create(
             phonemes,
