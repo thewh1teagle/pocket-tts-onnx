@@ -1,7 +1,7 @@
 """Stream straight to the speakers, so you can feel the latency.
 
-Put `pocket-tts-english.onnx` in the working directory, from the project's
-releases (or see docs/export.md to build one). Playback needs sounddevice:
+The English model is fetched from the Hub on first run and cached. Playback
+needs sounddevice:
 
     uv add sounddevice
 
@@ -17,7 +17,7 @@ import sounddevice as sd
 
 from pocket_tts_onnx import PocketTTS
 
-MODEL = "pocket-tts-english.onnx"
+MODEL = "english"
 VOICE = "alba"
 # `write` returns once a frame is queued, not once it is played, so closing the
 # stream right after the last one leaves PortAudio short of data and it pops.
@@ -45,7 +45,7 @@ def speak(tts: PocketTTS, text: str) -> None:
 
 def main() -> None:
     print(f"Loading {MODEL}...")
-    tts = PocketTTS(MODEL)
+    tts = PocketTTS.from_pretrained(MODEL)
 
     # The first call pays for onnxruntime warming up and for prompting the
     # voice. Doing it now, silently, is what a server would do at startup.

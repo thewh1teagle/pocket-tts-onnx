@@ -3,7 +3,7 @@
 The model has no speaking-rate control, so speed is a post-process on the
 audio. This is WSOLA — overlap-add with a small search for the best-aligned
 window — in a few lines of numpy, which is plenty for 0.7x to 1.4x on speech.
-Put `pocket-tts-english.onnx` in the working directory, then:
+The English model is fetched from the Hub on first run and cached. Then:
 
     uv run python examples/speed.py
 """
@@ -13,7 +13,7 @@ import soundfile as sf
 
 from pocket_tts_onnx import PocketTTS
 
-MODEL = "pocket-tts-english.onnx"
+MODEL = "english"
 TEXT = "This is the same take three times: a little slower, as it was, and a little faster."
 
 
@@ -60,7 +60,7 @@ def stretch(samples: np.ndarray, rate: float, sample_rate: int) -> np.ndarray:
 
 
 def main() -> None:
-    tts = PocketTTS(MODEL)
+    tts = PocketTTS.from_pretrained(MODEL)
     samples, sample_rate = tts.create(TEXT, voice="alba", seed=1)
     samples = np.asarray(samples, dtype=np.float32)
 

@@ -1,7 +1,7 @@
 """The same sentence a few ways: temperature, decode steps, and the seed.
 
-Put `pocket-tts-english.onnx` in the working directory, from the project's
-releases (or see docs/export.md to build one). Then:
+The English model is fetched from the Hub on first run and cached (or see
+docs/EXPORT.md to build one and pass its path to `PocketTTS` instead). Then:
 
     uv run python examples/tuning.py
 
@@ -14,12 +14,12 @@ import soundfile as sf
 
 from pocket_tts_onnx import PocketTTS
 
-MODEL = "pocket-tts-english.onnx"
+MODEL = "english"
 TEXT = "Well, that was unexpected. Are you sure you want to go through with it?"
 
 
 def main() -> None:
-    tts = PocketTTS(MODEL)
+    tts = PocketTTS.from_pretrained(MODEL)
 
     # Temperature scales the noise the flow sampler starts from. It is the one
     # knob that moves prosody: low is flat and safe, high is lively and, past

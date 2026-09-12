@@ -1,5 +1,19 @@
 # Using it
 
+## Loading a model
+
+```python
+tts = PocketTTS("pocket-tts-english.onnx")   # a file you have
+tts = PocketTTS.from_pretrained("english")   # from the Hub, cached after the first run
+```
+
+`from_pretrained` takes a short name — `english`, or `english-ipa` for the file
+with the Hebrew adapter and a Hebrew voice bundled in — or an exact filename in
+[thewh1teagle/pocket-tts-onnx](https://huggingface.co/thewh1teagle/pocket-tts-onnx);
+`repo=` points it elsewhere. Keyword arguments (`providers`, `num_threads`) go
+through to the constructor. `pocket_tts_onnx.hub.download(name)` is the fetch on
+its own, returning the cached path.
+
 ## Voices
 
 A model file ships with voices built in; `tts.voices()` lists them.

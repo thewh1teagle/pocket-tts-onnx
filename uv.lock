@@ -1017,6 +1017,7 @@ source = { editable = "." }
 dependencies = [
     { name = "conikud-onnx" },
     { name = "espeakng-loader" },
+    { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "phonemizer" },
@@ -1025,7 +1026,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "huggingface-hub" },
     { name = "onnx" },
     { name = "phonikud-onnx" },
     { name = "pocket-tts" },
@@ -1039,6 +1039,7 @@ dev = [
 requires-dist = [
     { name = "conikud-onnx", git = "https://github.com/conikud/conikud-onnx" },
     { name = "espeakng-loader", specifier = ">=0.2.4" },
+    { name = "huggingface-hub", specifier = ">=0.35.0" },
     { name = "numpy", specifier = ">=2.5.2" },
     { name = "onnxruntime", specifier = ">=1.29.0" },
     { name = "phonemizer", specifier = ">=3.4.0" },
@@ -1047,7 +1048,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "huggingface-hub", specifier = ">=1.29.0" },
     { name = "onnx", specifier = ">=1.22.0" },
     { name = "phonikud-onnx", specifier = ">=1.0.6" },
     { name = "pocket-tts", specifier = ">=3.0.2" },

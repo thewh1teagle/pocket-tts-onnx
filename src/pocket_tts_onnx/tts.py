@@ -19,6 +19,7 @@ from pathlib import Path
 import numpy as np
 import onnxruntime as ort
 
+from pocket_tts_onnx import hub
 from pocket_tts_onnx.audio import pad_to_frames, read_audio, resample
 from pocket_tts_onnx.text import (
     MixedTokenizer,
@@ -109,7 +110,8 @@ class PocketTTS:
     """Text to speech from a single exported pocket-tts ONNX file.
 
     ```python
-    tts = PocketTTS("pocket-tts-english.onnx")
+    tts = PocketTTS("pocket-tts-english.onnx")     # a file you have
+    tts = PocketTTS.from_pretrained("english")     # fetched from the Hub, then cached
     samples, sample_rate = tts.create("Hello world.", voice="alba")
     ```
     """
@@ -156,6 +158,15 @@ class PocketTTS:
         self._session_options = options
         self._providers = providers or ["CPUExecutionProvider"]
         self._voice_cache: dict[tuple[str, float], tuple[np.ndarray, int]] = {}
+
+    @classmethod
+    def from_pretrained(cls, name: str = "english", repo: str = hub.REPO, **kwargs) -> "PocketTTS":
+        """A model by name from the Hub, downloaded on first use and cached.
+
+        `name` is `english`, `english-ipa` (with the Hebrew adapter bundled in),
+        or the exact filename in `repo`. Keyword arguments go to the constructor.
+        """
+        return cls(hub.download(name, repo), **kwargs)
 
     # ------------------------------------------------------------------ voices
 

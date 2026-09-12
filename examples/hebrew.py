@@ -1,11 +1,9 @@
 """Generate Hebrew speech, in every input format the adapter understands.
 
-Everything below goes in the working directory. Take
-`pocket-tts-english-ipa.onnx`, which has the Hebrew adapter and a Hebrew voice
-bundled in, from the project's releases (or see docs/export.md to build one).
-
-Unvocalized Hebrew is phonemized by conikud, which fetches its weights from the
-Hub on first use and caches them. Then:
+`pocket-tts-english-ipa.onnx` has the Hebrew adapter and a Hebrew voice bundled
+in; it is fetched from the Hub on first run and cached (or see docs/EXPORT.md to
+build one and pass its path to `PocketTTS` instead). Unvocalized Hebrew is
+phonemized by conikud, which fetches its own weights the same way. Then:
 
     uv run python examples/hebrew.py
 """
@@ -14,7 +12,7 @@ import soundfile as sf
 
 from pocket_tts_onnx import PocketTTS, phonemize_mixed
 
-MODEL = "pocket-tts-english-ipa.onnx"
+MODEL = "english-ipa"
 
 # A Hebrew voice, so the accent has somewhere to come from. To use your own
 # recording instead, clone it once and pass the result as `voice`:
@@ -23,12 +21,15 @@ MODEL = "pocket-tts-english-ipa.onnx"
 VOICE = "omer"
 
 # `phonemize_mixed` sends each part of the text the shortest way to phonemes it
-# can, so all four of these are ordinary input.
+# can, so all of these are ordinary input.
 LINES = {
     # Unvocalized Hebrew: conikud guesses the vowels.
     "plain": "הכוח לשנות מתחיל ברגע שבו אתה מאמין שזה אפשרי!",
     # Latin words go through espeak, so they are spoken rather than spelled.
     "brands": "אני עובד עם Photoshop ועם Instagram כל יום.",
+    # Numbers, money, dates and times are spoken as words (normalize=True is
+    # the default): ₪25 becomes עשרים וחמישה שקלים, 14:30 שתיים וחצי אחר הצהריים.
+    "numbers": "הכרטיס עלה ₪25 והסרט מתחיל בשעה 14:30 ב-3 באוגוסט.",
     # Nikud is already unambiguous, so it is kept exactly as typed. Both of
     # these were produced by phonikud (https://pypi.org/project/phonikud-onnx).
     "nikud": "הַיָּם הָיָה שָׁקֵט, וְהַשֶּׁמֶשׁ שָׁקְעָה מֵאֲחוֹרֵי הֶהָרִים.",
@@ -44,7 +45,7 @@ DECODE_STEPS = 2
 
 
 def main() -> None:
-    tts = PocketTTS(MODEL)
+    tts = PocketTTS.from_pretrained(MODEL)
 
     for name, line in LINES.items():
         phonemes = phonemize_mixed(line)

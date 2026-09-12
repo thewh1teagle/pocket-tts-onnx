@@ -65,6 +65,17 @@ implementations of the same model only reach 29 dB. What is worth reading is the
 first frame, before the loop amplifies anything (34 to 46 dB), and whether EOS
 still fires on the same frame, which it does.
 
+## Numbers
+
+Apple M-series, 2 threads, int8:
+
+| | |
+| --- | --- |
+| time to first audio | 20 ms |
+| real-time factor | ~10x |
+| model file | 231 MB |
+| session load | 230 ms |
+
 ## What was measured against upstream
 
 With sampling noise held at zero, so the two paths are comparable:

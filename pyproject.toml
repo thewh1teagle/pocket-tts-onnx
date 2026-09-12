@@ -12,6 +12,7 @@ requires-python = ">=3.13"
 dependencies = [
     "conikud-onnx",
     "espeakng-loader>=0.2.4",
+    "huggingface-hub>=0.35.0",
     "numpy>=2.5.2",
     "onnxruntime>=1.29.0",
     "phonemizer>=3.4.0",
@@ -28,7 +29,6 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "huggingface-hub>=1.29.0",
     "onnx>=1.22.0",
     "phonikud-onnx>=1.0.6",
     "pocket-tts>=3.0.2",
